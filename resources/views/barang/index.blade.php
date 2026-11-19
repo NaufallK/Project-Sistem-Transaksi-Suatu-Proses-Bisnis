@@ -5,11 +5,6 @@
 @section('content')
     <h1>Data Barang</h1>
 
-    <!-- <p class="muted">
-        Penambahan barang memanggil <strong>stored procedure</strong>
-        <code>sp_tambah_barang(nama, jenis, idsatuan, harga)</code>.
-    </p> -->
-
     <div class="actions">
         <a href="{{ route('barang.create') }}"><button type="button">Tambah Barang</button></a>
     </div>
@@ -32,21 +27,22 @@
                     <td>{{ $barang->idbarang }}</td>
                     <td>{{ $barang->jenis }}</td>
                     <td>{{ $barang->nama }}</td>
-                    <td>{{ $barang->satuan->nama_satuan ?? '-' }}</td>
+                    <td>{{ $barang->nama_satuan ?? '-' }}</td>
                     <td>Rp {{ number_format($barang->harga, 0, ',', '.') }}</td>
                     <td>{{ $barang->status ? 'Aktif' : 'Nonaktif' }}</td>
-                    <td>
+                    <td style="display: flex; gap: 6px;">
+                        <a href="{{ route('barang.edit', $barang->idbarang) }}"><button type="button" style="background: #506173;">Edit</button></a>
                         @if ($barang->status)
-                            <form action="{{ route('barang.destroy', $barang) }}" method="POST">
+                            <form action="{{ route('barang.destroy', $barang->idbarang) }}" method="POST">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit">Nonaktifkan</button>
+                                <button type="submit" style="background: #a83232;">Nonaktifkan</button>
                             </form>
                         @else
-                            <form action="{{ route('barang.activate', $barang) }}" method="POST">
+                            <form action="{{ route('barang.activate', $barang->idbarang) }}" method="POST">
                                 @csrf
                                 @method('PATCH')
-                                <button type="submit">Aktifkan</button>
+                                <button type="submit" style="background: #2b7a4b;">Aktifkan</button>
                             </form>
                         @endif
                     </td>

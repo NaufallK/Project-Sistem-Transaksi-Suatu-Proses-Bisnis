@@ -21,7 +21,7 @@ class KartuStok extends Model
         'idtransaksi',
     ];
 
-    public function barang()
+    //public function barang()
     {
         return $this->belongsTo(
             Barang::class,

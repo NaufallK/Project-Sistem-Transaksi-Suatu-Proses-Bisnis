@@ -22,7 +22,7 @@ class Vendor extends Model
         'status' => 'boolean',
     ];
 
-    public function pengadaan()
+   //public function pengadaan()
     {
         return $this->hasMany(
             Pengadaan::class,

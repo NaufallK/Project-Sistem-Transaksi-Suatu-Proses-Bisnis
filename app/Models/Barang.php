@@ -25,7 +25,7 @@ class Barang extends Model
         'harga' => 'float',
     ];
 
-    public function satuan()
+    //public function satuan()
     {
         return $this->belongsTo(
             Satuan::class,
@@ -34,7 +34,7 @@ class Barang extends Model
         );
     }
 
-    public function detailPengadaan()
+    //public function detailPengadaan()
     {
         return $this->hasMany(
             DetailPengadaan::class,
@@ -43,7 +43,7 @@ class Barang extends Model
         );
     }
 
-    public function detailPenjualan()
+    //public function detailPenjualan()
     {
         return $this->hasMany(
             DetailPenjualan::class,
@@ -52,7 +52,7 @@ class Barang extends Model
         );
     }
 
-    public function kartuStok()
+    //public function kartuStok()
     {
         return $this->hasMany(
             KartuStok::class,

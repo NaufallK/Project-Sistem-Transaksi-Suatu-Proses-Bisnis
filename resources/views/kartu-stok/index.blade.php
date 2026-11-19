@@ -33,7 +33,7 @@
                 <tr>
                     <td>{{ $kartu->idkartu_stok }}</td>
                     <td>{{ $kartu->created_at }}</td>
-                    <td>{{ $kartu->barang->nama ?? '-' }}</td>
+                    <td>{{ $kartu->barang_nama ?? '-' }}</td>
                     <td>{{ $kartu->jenis_transaksi }}</td>
                     <td>#{{ $kartu->idtransaksi }}</td>
                     <td>{{ $kartu->masuk }}</td>

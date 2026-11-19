@@ -2,12 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Barang;
-use App\Models\DetailPenjualan;
-use App\Models\KartuStok;
-use App\Models\MarginPenjualan;
-use App\Models\Penjualan;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,130 +9,71 @@ class PenjualanController extends Controller
 {
     public function index()
     {
-        $penjualans = Penjualan::with(['user', 'margin', 'details.barang'])
-            ->orderBy('idpenjualan', 'asc')
-            ->get();
-
+        $penjualans = DB::select('SELECT * FROM penjualan ORDER BY idpenjualan ASC');
+        foreach ($penjualans as $p) {
+            $p->user = DB::selectOne('SELECT * FROM user WHERE iduser = ?', [$p->iduser]);
+            $p->margin = DB::selectOne('SELECT * FROM margin_penjualan WHERE idmargin_penjualan = ?', [$p->idmargin_penjualan]);
+            $p->details = DB::select('SELECT d.*, b.nama as nama FROM detail_penjualan d JOIN barang b ON d.idbarang = b.idbarang WHERE d.idpenjualan = ?', [$p->idpenjualan]);
+            foreach ($p->details as $d) {
+                $d->barang = DB::selectOne('SELECT * FROM barang WHERE idbarang = ?', [$d->idbarang]);
+            }
+        }
         return view('penjualan.index', compact('penjualans'));
     }
 
     public function create()
     {
-        return view('penjualan.create', [
-            'users' => User::orderBy('username')->get(),
-            'margins' => MarginPenjualan::where('status', 1)
-                ->orderByDesc('idmargin_penjualan')
-                ->get(),
-            'barangs' => Barang::where('status', 1)->orderBy('nama')->get(),
-            'stok' => KartuStok::query()
-                ->select('idbarang', DB::raw('SUM(masuk - keluar) AS tersedia'))
-                ->groupBy('idbarang')
-                ->pluck('tersedia', 'idbarang'),
-        ]);
+        $users = DB::select('SELECT * FROM user ORDER BY username');
+        $margins = DB::select('SELECT * FROM margin_penjualan WHERE status = 1 ORDER BY idmargin_penjualan DESC');
+        $barangs = DB::select('SELECT * FROM barang WHERE status = 1 ORDER BY nama');
+        $stoks = DB::select('SELECT idbarang, SUM(masuk - keluar) as tersedia FROM kartu_stok GROUP BY idbarang');
+        $stok = [];
+        foreach ($stoks as $s) {
+            $stok[$s->idbarang] = (int) $s->tersedia;
+        }
+        return view('penjualan.create', compact('users', 'margins', 'barangs', 'stok'));
     }
 
-    /**
-     * Endpoint bantu untuk preview harga jual.
-     * Nilainya diambil langsung dari function database fn_hitung_harga_jual().
-     */
     public function hargaJual(Request $request)
     {
-        $data = $request->validate([
-            'idbarang' => ['required', 'integer', 'exists:barang,idbarang'],
-            'idmargin' => ['required', 'integer', 'exists:margin_penjualan,idmargin_penjualan'],
-        ]);
-
-        $row = DB::selectOne(
-            'SELECT fn_hitung_harga_jual(?, ?) AS harga_jual',
-            [(int) $data['idbarang'], (int) $data['idmargin']]
-        );
-
-        return response()->json([
-            'harga_jual' => (float) $row->harga_jual,
-        ]);
+        $data = $request->validate(['idbarang' => ['required', 'integer'], 'idmargin' => ['required', 'integer']]);
+        $row = DB::selectOne('SELECT fn_hitung_harga_jual(?, ?) AS harga_jual', [(int) $data['idbarang'], (int) $data['idmargin']]);
+        return response()->json(['harga_jual' => (float) ($row->harga_jual ?? 0)]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'iduser' => ['required', 'integer', 'exists:user,iduser'],
-            'idmargin_penjualan' => ['required', 'integer', 'exists:margin_penjualan,idmargin_penjualan'],
-            'idbarang' => ['required', 'integer', 'exists:barang,idbarang'],
-            'jumlah' => ['required', 'integer', 'min:1'],
+            'iduser' => ['required', 'integer'], 'idmargin_penjualan' => ['required', 'integer'],
+            'idbarang' => ['required', 'integer'], 'jumlah' => ['required', 'integer', 'min:1'],
         ]);
-        $stokTersedia = (int) KartuStok::query()
-            ->where('idbarang', $validated['idbarang'])
-            ->sum(DB::raw('masuk - keluar'));
-
+        $stokData = DB::selectOne('SELECT SUM(masuk - keluar) as tersedia FROM kartu_stok WHERE idbarang = ?', [$validated['idbarang']]);
+        $stokTersedia = (int) ($stokData->tersedia ?? 0);
         if ((int) $validated['jumlah'] > $stokTersedia) {
-            return back()
-                ->withErrors([
-                    'jumlah' => "Stok tidak cukup. Tersedia: {$stokTersedia}.",
-                ])
-                ->withInput();
+            return back()->withErrors(['jumlah' => "Stok tidak cukup. Tersedia: {$stokTersedia}."])->withInput();
         }
-
-        // Harga jual dihitung oleh FUNCTION database, bukan oleh PHP.
-        $row = DB::selectOne(
-            'SELECT fn_hitung_harga_jual(?, ?) AS harga_jual',
-            [(int) $validated['idbarang'], (int) $validated['idmargin_penjualan']]
-        );
-
-        $hargaJual = (float) $row->harga_jual;
+        $row = DB::selectOne('SELECT fn_hitung_harga_jual(?, ?) AS harga_jual', [(int) $validated['idbarang'], (int) $validated['idmargin_penjualan']]);
+        $hargaJual = (float) ($row->harga_jual ?? 0);
         $subtotal = $hargaJual * (int) $validated['jumlah'];
         $ppn = round($subtotal * 0.11, 2);
-
         DB::transaction(function () use ($validated, $hargaJual, $subtotal, $ppn) {
-            $penjualan = Penjualan::create([
-                'subtotal' => $subtotal,
-                'ppn' => $ppn,
-                'total_nilai' => $subtotal + $ppn,
-                'iduser' => $validated['iduser'],
-                'idmargin_penjualan' => $validated['idmargin_penjualan'],
-            ]);
-
-            DetailPenjualan::create([
-                'harga_satuan' => $hargaJual,
-                'jumlah' => $validated['jumlah'],
-                'sub_total' => $subtotal,
-                'idpenjualan' => $penjualan->idpenjualan,
-                'idbarang' => $validated['idbarang'],
-            ]);
-
-            $stokTerakhir = (int) KartuStok::where(
-                'idbarang',
-                $validated['idbarang']
-            )->sum(DB::raw('masuk - keluar'));
-
-            KartuStok::create([
-                'jenis_transaksi' => 'PENJUALAN',
-                'masuk' => 0,
-                'keluar' => $validated['jumlah'],
-                'stock' => $stokTerakhir - $validated['jumlah'],
-                'idbarang' => $validated['idbarang'],
-                'idtransaksi' => $penjualan->idpenjualan,
-            ]);
+            DB::statement('INSERT INTO penjualan (subtotal, ppn, total_nilai, iduser, idmargin_penjualan, created_at) VALUES (?, ?, ?, ?, ?, NOW())', [$subtotal, $ppn, $subtotal + $ppn, $validated['iduser'], $validated['idmargin_penjualan']]);
+            $idpenjualan = DB::getPdo()->lastInsertId();
+            DB::statement('INSERT INTO detail_penjualan (harga_satuan, jumlah, sub_total, idpenjualan, idbarang) VALUES (?, ?, ?, ?, ?)', [$hargaJual, $validated['jumlah'], $subtotal, $idpenjualan, $validated['idbarang']]);
+            $stockRow = DB::selectOne('SELECT SUM(masuk - keluar) as total FROM kartu_stok WHERE idbarang = ?', [$validated['idbarang']]);
+            $stokTerakhir = (int) ($stockRow->total ?? 0);
+            DB::statement('INSERT INTO kartu_stok (jenis_transaksi, masuk, keluar, stock, idbarang, idtransaksi, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())', ['PENJUALAN', 0, $validated['jumlah'], $stokTerakhir - $validated['jumlah'], $validated['idbarang'], $idpenjualan]);
         });
-
-        return redirect()
-            ->route('penjualan.index')
-            ->with(
-                'success',
-                'Penjualan disimpan.'
-            );
+        return redirect()->route('penjualan.index')->with('success', 'Penjualan disimpan.');
     }
 
-    public function destroy(Penjualan $penjualan)
+    public function destroy($id)
     {
-        DB::transaction(function () use ($penjualan) {
-            KartuStok::where('jenis_transaksi', 'PENJUALAN')
-                ->where('idtransaksi', $penjualan->idpenjualan)
-                ->delete();
-            $penjualan->details()->delete();
-            $penjualan->delete();
+        DB::transaction(function () use ($id) {
+            DB::statement('DELETE FROM kartu_stok WHERE jenis_transaksi = ? AND idtransaksi = ?', ['PENJUALAN', $id]);
+            DB::statement('DELETE FROM detail_penjualan WHERE idpenjualan = ?', [$id]);
+            DB::statement('DELETE FROM penjualan WHERE idpenjualan = ?', [$id]);
         });
-
-        return redirect()->route('penjualan.index')
-            ->with('success', 'Penjualan dan kartu stoknya berhasil dihapus.');
+        return redirect()->route('penjualan.index')->with('success', 'Penjualan dan kartu stoknya berhasil dihapus.');
     }
 }

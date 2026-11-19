@@ -29,22 +29,22 @@ class Penerimaan extends Model
         'total_nilai' => 'float',
     ];
 
-    public function user()
+    //public function user()
     {
         return $this->belongsTo(User::class, 'iduser', 'iduser');
     }
 
-    public function vendor()
+   //public function vendor()
     {
         return $this->belongsTo(Vendor::class, 'idvendor', 'idvendor');
     }
 
-    public function pengadaan()
+   //public function pengadaan()
     {
         return $this->belongsTo(Pengadaan::class, 'idpengadaan', 'idpengadaan');
     }
 
-    public function details()
+   //public function details()
     {
         return $this->hasMany(
             DetailPenerimaan::class,

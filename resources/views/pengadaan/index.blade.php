@@ -18,7 +18,7 @@
                 <th>Vendor</th>
                 <th>Status</th>
                 <th>Subtotal</th>
-                <th>PPN</th>
+                <th>PPN (11%)</th>
                 <th>Total</th>
                 <th>Detail Barang</th>
                 <th>Aksi</th>
@@ -40,7 +40,7 @@
                         @endforeach
                     </td>
                     <td>
-                        <form action="{{ route('pengadaan.destroy', $pengadaan) }}" method="POST" onsubmit="return confirm('Hapus pengadaan ini?')">
+                        <form action="{{ route('pengadaan.destroy', ['pengadaan' => $pengadaan->idpengadaan]) }}" method="POST" onsubmit="return confirm('Hapus pengadaan ini?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" style="background: #a83232;">Hapus</button>

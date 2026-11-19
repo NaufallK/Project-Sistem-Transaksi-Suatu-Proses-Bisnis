@@ -20,7 +20,7 @@ class Satuan extends Model
         'status' => 'boolean',
     ];
 
-    public function barang()
+    //public function barang()
     {
         return $this->hasMany(
             Barang::class,

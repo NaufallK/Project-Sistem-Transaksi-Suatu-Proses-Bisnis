@@ -22,7 +22,7 @@
                     <label for="idpengadaan">Pilih Pengadaan</label>
                     <select name="idpengadaan" id="idpengadaan" required>
                         @forelse ($pengadaans as $pengadaan)
-                            <option value="{{ $pengadaan->idpengadaan }}" data-details="{{ $pengadaan->items_data->toJson() }}">
+                            <option value="{{ $pengadaan->idpengadaan }}" data-details='@json($pengadaan->items_data)'>
                                 #{{ $pengadaan->idpengadaan }} - {{ $pengadaan->vendor->nama_vendor ?? '-' }} ({{ $pengadaan->status }})
                             </option>
                         @empty

@@ -45,7 +45,7 @@
                     </td>
                     <td>Rp {{ number_format($penjualan->total_nilai, 0, ',', '.') }}</td>
                     <td>
-                        <form action="{{ route('penjualan.destroy', $penjualan) }}" method="POST" onsubmit="return confirm('Hapus penjualan ini? Kartu stok keluar juga dihapus.')">
+                        <form action="{{ route('penjualan.destroy', ['penjualan' => $penjualan->idpenjualan]) }}" method="POST" onsubmit="return confirm('Hapus penjualan ini? Kartu stok keluar juga dihapus.')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" style="background: #a83232;">Hapus</button>

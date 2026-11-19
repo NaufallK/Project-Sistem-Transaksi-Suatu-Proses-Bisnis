@@ -46,7 +46,7 @@
                         @endforeach
                     </td>
                     <td>
-                        <form action="{{ route('penerimaan.destroy', $penerimaan) }}" method="POST" onsubmit="return confirm('Hapus penerimaan ini? Kartu stoknya juga dihapus.')">
+                        <form action="{{ route('penerimaan.destroy', ['penerimaan' => $penerimaan->idpenerimaan]) }}" method="POST" onsubmit="return confirm('Hapus penerimaan ini? Kartu stoknya juga dihapus.')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" style="background: #a83232;">Hapus</button>

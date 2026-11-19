@@ -27,12 +27,12 @@ class Penjualan extends Model
         'total_nilai' => 'float',
     ];
 
-    public function user()
+    //public function user()
     {
         return $this->belongsTo(User::class, 'iduser', 'iduser');
     }
 
-    public function margin()
+    //public function margin()
     {
         return $this->belongsTo(
             MarginPenjualan::class,
@@ -41,7 +41,7 @@ class Penjualan extends Model
         );
     }
 
-    public function details()
+   //public function details()
     {
         return $this->hasMany(
             DetailPenjualan::class,

@@ -30,7 +30,7 @@ class DetailPengadaan extends Model
         'sub_total' => 'float',
     ];
 
-    public function barang()
+    //public function barang()
     {
         return $this->belongsTo(
             Barang::class,
@@ -39,7 +39,7 @@ class DetailPengadaan extends Model
         );
     }
 
-    public function pengadaan()
+    //public function pengadaan()
     {
         return $this->belongsTo(
             Pengadaan::class,

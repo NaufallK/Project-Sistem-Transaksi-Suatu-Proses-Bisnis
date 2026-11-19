@@ -26,12 +26,12 @@ class DetailPenjualan extends Model
         'sub_total' => 'float',
     ];
 
-    public function barang()
+    //public function barang()
     {
         return $this->belongsTo(Barang::class, 'idbarang', 'idbarang');
     }
 
-    public function penjualan()
+    //public function penjualan()
     {
         return $this->belongsTo(Penjualan::class, 'idpenjualan', 'idpenjualan');
     }

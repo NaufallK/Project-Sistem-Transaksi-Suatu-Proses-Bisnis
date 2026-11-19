@@ -35,7 +35,7 @@ class Pengadaan extends Model
         'total_nilai' => 'float',
     ];
 
-    public function user()
+    //public function user()
     {
         return $this->belongsTo(
             User::class,
@@ -44,7 +44,7 @@ class Pengadaan extends Model
         );
     }
 
-    public function vendor()
+    //public function vendor()
     {
         return $this->belongsTo(
             Vendor::class,
@@ -53,7 +53,7 @@ class Pengadaan extends Model
         );
     }
 
-    public function details()
+    //public function details()
     {
         return $this->hasMany(
             DetailPengadaan::class,
@@ -62,7 +62,7 @@ class Pengadaan extends Model
         );
     }
 
-    public function penerimaans()
+    //public function penerimaans()
     {
         return $this->hasMany(
             Penerimaan::class,
